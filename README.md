@@ -1,179 +1,252 @@
-# SoulSync AI
+<div align="center">
+
+# 🧠✨ SoulSync AI
 
 **Holistic Wellness, Mental Resilience & Preventative Health Companion**
 
-An AI-powered full-stack web application that helps users record everyday wellbeing habits, understand patterns in their own data and turn those patterns into practical, non-medical next steps.
+An AI-powered full-stack web application that helps users record everyday wellbeing habits, uncover patterns in their own data, and turn those insights into practical, non-medical next steps.
 
-> **Course:** CSE 4104 – Software Development III | **Section:** 7A | **Team:** CSE4104-7A-T03
-> **Department:** Computer Science and Engineering, Northern University of Business and Technology, Khulna
-> **Submitted to:** Md. Riaz Mahmud, Assistant Professor
+[![Course](https://img.shields.io/badge/Course-CSE%204104%20%7C%20Software%20Development%20III-blue?style=for-the-badge)](https://github.com)
+[![Section](https://img.shields.io/badge/Section-7A%20%7C%20Team%20T03-indigo?style=for-the-badge)](https://github.com)
+[![University](https://img.shields.io/badge/University-NUBT%20Khulna-teal?style=for-the-badge)](https://github.com)
+[![Status](https://img.shields.io/badge/Status-In%20Progress-amber?style=for-the-badge)](https://github.com)
 
-> ⚠️ **Disclaimer:** SoulSync AI is a wellness-awareness and habit-support tool. It is **not a medical device** and does not diagnose conditions, prescribe treatment or replace doctors, counsellors or other qualified professionals. AI-generated suggestions are general wellness guidance and are not clinically validated. If you need help with a medical or mental-health concern, please contact a qualified professional or local emergency services.
+<p>
+  <a href="#-project-overview">Overview</a> •
+  <a href="#-key-features">Features</a> •
+  <a href="#-technology-stack">Tech Stack</a> •
+  <a href="#-system-architecture">Architecture</a> •
+  <a href="#-getting-started">Getting Started</a> •
+  <a href="#-team-information">Team</a>
+</p>
 
----
-
-## Team Information
-
-| No. | Member                        | Student ID  | Primary responsibility                                                                     |
-| --- | ----------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
-| 1   | Zunayed Hossain (Team Leader) | 11230321505 | QA, DevOps, project coordination, integration support and final submission                 |
-| 2   | Mousumi Khatun                | 11230321229 | AI integration, prompt design, provider service and AI safety testing                      |
-| 3   | Promith Saha Joy              | 11230321389 | Backend development, REST APIs, database models, authentication and server-side validation |
-| 4   | Samira Islam Kanta            | 11230321317 | Frontend development, responsive UI, dashboard, forms, charts and API integration          |
-
-All members take part in integration, testing, documentation and code review.
+</div>
 
 ---
 
-## Project Overview
+> [!WARNING]
+> **Medical Disclaimer:** SoulSync AI is a wellness-awareness and habit-support tool. It is **not a medical device** and does not diagnose conditions, prescribe treatment, or replace doctors, counsellors, or other qualified professionals. AI-generated suggestions are general wellness guidance and are not clinically validated. If you need help with a medical or mental-health concern, please contact a qualified professional or local emergency services.
 
-University students and young professionals often face irregular sleep, stress, inactivity and skipped meals, but their information is scattered across apps, notebooks and memory, and most trackers show records without suggesting what to do next.
+---
 
-SoulSync AI follows a simple cycle: **Track → Understand → Act → Review → Improve.** Users log daily wellness metrics, see trends calculated from their own stored records, receive consent-based AI suggestions and routines, and review a weekly report. Numerical statistics are always calculated by the application; the AI is used only to explain patterns and draft suggestions.
+## 🎓 Academic Context
 
-## Objectives
+* **Course:** CSE 4104 – Software Development III
+* **Section & Team:** Section `7A` | Team `CSE4104-7A-T03`
+* **Department:** Computer Science and Engineering, Northern University of Business and Technology, Khulna
+* **Submitted to:** Md. Riaz Mahmud, Assistant Professor
 
-1. Develop a secure full-stack web application with registration, login, profile management and role-based access.
-2. Let users record daily mood, stress, sleep, water intake, activity and energy in one place.
-3. Present weekly and monthly charts and statistics calculated from actual stored records.
-4. Provide AI-supported wellness chat, personalised recommendations, daily routines and weekly summaries.
-5. Support healthy habits through goals, guided breathing exercises, reminders and notifications.
-6. Protect privacy through data minimisation, explicit consent for external AI processing and secure access controls.
-7. Give administrators basic tools to manage users and wellness resources.
-8. Test, document and deploy a functional application suitable for academic demonstration.
+---
 
-## Features
+## 📖 Project Overview
 
-- **Authentication & profile** – registration, login/logout, profile settings, password change, protected routes, User/Admin roles
-- **Daily wellness tracker** – mood, stress, sleep, hydration, activity and energy; one record per user per day
-- **Mental wellness tools** – private journal, daily reflection, guided breathing timer, curated resource library
-- **Dashboard & analytics** – today's overview, weekly/monthly charts, streaks, missing-day indicators
-- **Goals & habits** – daily/weekly goals with progress and consistency tracking
-- **AI wellness assistant** – wellness chatbot, personalised recommendations, daily routine generator, weekly summary (consent-based, with safety checks and disclaimers)
-- **Reminders & notifications** – in-app reminders, goal deadlines, automated weekly reports (optional email)
-- **Admin panel** – manage users and wellness resources, review reported content
+University students and young professionals frequently experience irregular sleep, high stress, physical inactivity, and skipped meals. Existing health data is often scattered across multiple apps and notebooks, while most standard trackers merely display logs without offering actionable guidance.
 
-### AI safety and privacy highlights
-
-- The AI provider is called **only from the backend**; API keys never reach the browser or GitHub.
-- Wellness data is sent to the AI provider **only after explicit user consent** and only as the minimum required fields.
-- **Private journal text is excluded** from AI requests by default.
-- A rule-based safety check runs before every AI call; crisis messages receive a supportive response that points to professional and emergency help.
-- AI output is validated, filtered and shown with a non-medical disclaimer.
-
-## Technology Stack
-
-| Layer           | Technology                                                                                               |
-| --------------- | -------------------------------------------------------------------------------------------------------- |
-| Frontend        | React.js (Vite), JavaScript ES6+, Tailwind CSS, React Router, Axios, Context API, Recharts, Lucide React |
-| Backend         | Node.js, Express.js, REST API under `/api/v1`, Mongoose                                                  |
-| Database        | MongoDB Atlas                                                                                            |
-| Authentication  | JWT in secure HTTP-only cookies, password hashing, role-based authorisation                              |
-| AI integration  | OpenAI API **or** Google Gemini API (one provider initially, behind a swappable backend service)         |
-| Automation      | node-cron, MongoDB-backed notifications, optional Nodemailer email                                       |
-| Testing         | Vitest, Supertest, React Testing Library, Playwright                                                     |
-| Version control | Git and GitHub (feature branches + pull requests)                                                        |
-| Deployment      | Vercel (frontend), Render (backend), MongoDB Atlas (database)                                            |
-
-## System Architecture
+**SoulSync AI** bridges this gap through a continuous five-stage wellness cycle:
 
 ```
-React + Tailwind + Recharts (browser, Vercel)
-        │  HTTPS / JSON · secure HTTP-only cookie
-        ▼
-Node.js + Express REST API  (/api/v1, Render)
-  middleware: Helmet · CORS · rate limit · JWT auth · role guard · validation
-  services:   Auth · Wellness · Analytics · Goals · Reports · Notifications · AI
-        │                          │                         │
-        ▼                          ▼                         ▼
- MongoDB Atlas            AI provider (OpenAI)   node-cron jobs
- (via Mongoose)           backend only, via adapter       (reminders, weekly reports)
+  📝 Track   ──▶   📊 Understand   ──▶   ⚡ Act   ──▶   🔍 Review   ──▶   🌱 Improve
 ```
 
-See `docs/CSE4104-7A-T03_ArchitectureDiagram.pdf` for the full diagram.
+Users log daily wellness metrics, view trends calculated strictly from their own stored records, receive consent-based AI suggestions and daily routines, and review automated weekly progress reports. **All numerical statistics are deterministically computed by the application**—the AI is utilized solely to explain patterns and draft personalized wellness suggestions.
 
-## Repository Structure
+### 🎯 Core Objectives
+1. **Secure Architecture:** Build a full-stack web application featuring authentication, profile management, and role-based access control (RBAC).
+2. **Unified Tracking:** Centralize daily logs for mood, stress, sleep, hydration, physical activity, and energy levels.
+3. **Data-Driven Analytics:** Render weekly and monthly charts and statistics derived from actual user records.
+4. **AI Wellness Guidance:** Provide consent-driven wellness chat, tailored recommendations, daily routines, and weekly summaries.
+5. **Habit Reinforcement:** Support consistency via goal tracking, guided breathing timers, reminders, and notifications.
+6. **Privacy-First Design:** Enforce data minimization, explicit consent gates for external AI calls, and strict access controls.
+7. **Administrative Control:** Equip administrators with tools to manage platform users and curated wellness resources.
+8. **Academic Readiness:** Deliver a thoroughly tested, well-documented, and deployed application suitable for live academic evaluation.
 
-> Planned structure – update as the implementation proceeds.
+---
 
+## ✨ Key Features
+
+* 🔐 **Authentication & Profile Management** — Registration, secure login/logout, profile settings, password updates, protected routes, and `User` / `Admin` role separation.
+* 📅 **Daily Wellness Tracker** — Log mood, stress, sleep, hydration, activity, and energy (enforcing one structured entry per user per day).
+* 🧘 **Mental Wellness Toolkit** — Private reflection journal, daily prompts, interactive guided breathing timer, and a curated wellness resource library.
+* 📈 **Dashboard & Analytics** — Today's snapshot, weekly/monthly visual trends, habit streaks, and missing-day indicators.
+* 🎯 **Goals & Habit Tracking** — Configurable daily and weekly targets with real-time progress and consistency metrics.
+* 🤖 **AI Wellness Assistant** — Interactive wellness chatbot, personalized recommendations, daily routine generator, and weekly summary compiler.
+* 🔔 **Reminders & Notifications** — In-app reminders, goal deadline alerts, and automated weekly reports (with optional email delivery).
+* 🛡️ **Admin Panel** — User account oversight, wellness resource curation, and moderation of reported content.
+
+### 🔒 AI Safety & Privacy Highlights
+> [!IMPORTANT]
+> Privacy and user safety are built directly into the backend pipeline:
+> * **Server-Side Execution:** The AI provider is invoked **exclusively from the backend**; API keys are never exposed to the client or version control.
+> * **Explicit Consent Gate:** Wellness metrics are transmitted to the AI provider **only after explicit user consent** and stripped down to minimal required fields.
+> * **Zero Journal Exposure:** **Private journal text is excluded** from AI requests by default.
+> * **Pre-Flight Crisis Detection:** A rule-based safety filter screens every prompt prior to AI execution; crisis indicators immediately trigger a supportive response with professional and emergency helpline resources.
+> * **Output Guardrails:** All AI responses undergo validation, filtering, and mandatory non-medical disclaimer tagging.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) React Router, Axios, Context API, Recharts, Lucide React |
+| **Backend** | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white) ![Express.js](https://img.shields.io/badge/Express.js-000000?style=flat-square&logo=express&logoColor=white) REST API (`/api/v1`), Mongoose ODM |
+| **Database** | ![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-4EA94B?style=flat-square&logo=mongodb&logoColor=white) |
+| **Security & Auth** | JWT (HTTP-only secure cookies), Password Hashing (`bcrypt`), RBAC Middleware, Helmet, Rate Limiting |
+| **AI Integration** | ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white) / ![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=google&logoColor=white) (Swappable backend adapter service) |
+| **Automation** | `node-cron`, MongoDB-backed notifications, Nodemailer (optional email alerts) |
+| **Testing** | Vitest, Supertest, React Testing Library, Playwright |
+| **DevOps & Hosting** | ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white) ![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white) ![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white) |
+
+---
+
+## 🏗️ System Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│                React + Tailwind + Recharts (Browser / Vercel)           │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │ HTTPS / JSON · Secure HTTP-Only Cookie
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                 Node.js + Express REST API (/api/v1 · Render)           │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │ Middleware: Helmet · CORS · Rate Limit · JWT Auth · RBAC · Joi/Zod │  │
+│  ├───────────────────────────────────────────────────────────────────┤  │
+│  │ Services:   Auth · Wellness · Analytics · Goals · Reports · AI    │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+└──────────────┬─────────────────────┬─────────────────────┬──────────────┘
+               │                     │                     │
+               ▼                     ▼                     ▼
+      ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+      │  MongoDB Atlas  │   │   AI Provider   │   │  node-cron Jobs │
+      │ (via Mongoose)  │   │  (via Adapter)  │   │ (Alerts/Reports)│
+      └─────────────────┘   └─────────────────┘   └─────────────────┘
 ```
+
+> 📄 *Refer to [`docs/CSE4104-7A-T03_ArchitectureDiagram.pdf`](docs/CSE4104-7A-T03_ArchitectureDiagram.pdf) for the complete system architecture diagram.*
+
+---
+
+## 📂 Repository Structure
+
+> [!NOTE]
+> *This reflects the planned modular architecture and will evolve as implementation progresses.*
+
+```text
 SoulSync-AI/
-├── client/                  # React (Vite) frontend
+├── client/                  # React (Vite) frontend application
 │   ├── src/
-│   │   ├── components/      # reusable UI components
-│   │   ├── pages/           # Dashboard, Tracker, Journal, Goals, AI, Admin ...
-│   │   ├── context/         # auth and app state (Context API)
-│   │   ├── services/        # Axios API clients
-│   │   └── utils/
-│   └── tests/
-├── server/                  # Node.js + Express backend
+│   │   ├── components/      # Reusable UI components
+│   │   ├── pages/           # Dashboard, Tracker, Journal, Goals, AI, Admin
+│   │   ├── context/         # Auth and global app state (Context API)
+│   │   ├── services/        # Axios API client modules
+│   │   └── utils/           # Helper functions & formatters
+│   └── tests/               # Frontend unit & component tests
+├── server/                  # Node.js + Express backend API
 │   ├── src/
-│   │   ├── config/          # env, database, security settings
-│   │   ├── middleware/      # auth, role guard, validation, rate limit, errors
-│   │   ├── models/          # Mongoose schemas (Users, WellnessLogs, Goals ...)
-│   │   ├── routes/          # /api/v1 route definitions
-│   │   ├── controllers/
-│   │   ├── services/        # analytics, reports, notifications, ai/ (adapter, safety, consent)
-│   │   └── jobs/            # node-cron reminder and weekly report jobs
-│   └── tests/
-├── docs/                    # proposal, SRS and diagrams
+│   │   ├── config/          # Environment, database & security configs
+│   │   ├── middleware/      # Auth, role guard, validation, rate limit, error handlers
+│   │   ├── models/          # Mongoose schemas (Users, WellnessLogs, Goals, etc.)
+│   │   ├── routes/          # /api/v1 endpoint definitions
+│   │   ├── controllers/     # Request handlers
+│   │   ├── services/        # Analytics, reports, notifications & ai/ (adapter, safety, consent)
+│   │   └── jobs/            # node-cron reminder & weekly report schedulers
+│   └── tests/               # API integration & unit tests
+├── docs/                    # Project proposal, SRS & UML/ER diagrams
 │   ├── CSE4104-7A-T03_SRS.pdf
 │   ├── CSE4104-7A-T03_UseCaseDiagram.pdf
 │   ├── CSE4104-7A-T03_ERDiagram.pdf
 │   └── CSE4104-7A-T03_ArchitectureDiagram.pdf
-├── .env.example             # variable names only – never commit real secrets
+├── .env.example             # Environment variable template (no real secrets)
 ├── .gitignore
 └── README.md
 ```
 
-## Documentation
+---
 
-| Document                            | File                                          |
-| ----------------------------------- | --------------------------------------------- |
-| Software Requirement Specification  | `docs/CSE4104-7A-T03_SRS.pdf`                 |
-| Use Case Diagram                    | `docs/CSE4104-7A-T03_UseCaseDiagram.pdf`      |
-| ER Diagram                          | `docs/CSE4104-7A-T03_ERDiagram.pdf`           |
-| Initial System Architecture Diagram | `docs/CSE4104-7A-T03_ArchitectureDiagram.pdf` |
+## 📑 Project Documentation
 
-## Getting Started
+| Document | File Path |
+| :--- | :--- |
+| **Software Requirement Specification (SRS)** | [`docs/CSE4104-7A-T03_SRS.pdf`](docs/CSE4104-7A-T03_SRS.pdf) |
+| **Use Case Diagram** | [`docs/CSE4104-7A-T03_UseCaseDiagram.pdf`](docs/CSE4104-7A-T03_UseCaseDiagram.pdf) |
+| **Entity-Relationship (ER) Diagram** | [`docs/CSE4104-7A-T03_ERDiagram.pdf`](docs/CSE4104-7A-T03_ERDiagram.pdf) |
+| **Initial System Architecture Diagram** | [`docs/CSE4104-7A-T03_ArchitectureDiagram.pdf`](docs/CSE4104-7A-T03_ArchitectureDiagram.pdf) |
 
-> Setup instructions will be completed as the implementation proceeds. The intended workflow is:
+---
 
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd SoulSync-AI
+## 🚀 Getting Started
 
-# 2. Backend
-cd server
-cp .env.example .env        # fill in MONGODB_URI, JWT_SECRET, AI provider key, CLIENT_ORIGIN
-npm install
-npm run dev
+> [!TIP]
+> *Setup steps below outline the standard local development workflow as modules are completed.*
 
-# 3. Frontend (new terminal)
-cd client
-npm install
-npm run dev
-```
+### Prerequisites
+* **Node.js** (v18+ recommended)
+* **npm** or **yarn**
+* **MongoDB Atlas** cluster (or local MongoDB instance)
+* **OpenAI** or **Google Gemini** API key
 
-**Never commit** `.env` files, API keys, passwords, real private journal data or production secrets.
+### Local Installation
 
-## Team Workflow
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/<your-username>/SoulSync-AI.git
+   cd SoulSync-AI
+   ```
 
-- Agile-style short cycles with feature branches, pull requests and peer code review.
-- The `main` branch is protected where possible; every feature merges through a reviewed pull request.
-- A feature is complete only after its basic tests pass and it is integrated into the shared repository.
-- Small, meaningful commits; API contracts agreed early so frontend and backend can progress in parallel.
+2. **Configure & start the Backend**
+   ```bash
+   cd server
+   cp .env.example .env   # Add MONGODB_URI, JWT_SECRET, AI_API_KEY, CLIENT_ORIGIN
+   npm install
+   npm run dev
+   ```
 
-## Project Status
+3. **Configure & start the Frontend** *(in a new terminal)*
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   ```
 
-| Phase                                                   | Status                     |
-| ------------------------------------------------------- | -------------------------- |
-| Project Proposal                                        | ✅ Submitted (08 Nov 2026) |
-| Software Requirement Specification and initial diagrams | ✅ Submitted (Week 03)     |
-| System design and implementation                        | 🔄 In progress             |
-| Testing, deployment and final report                    | ⏳ Planned                 |
+> [!CAUTION]
+> **Never commit** `.env` files, API keys, database credentials, real private journal entries, or production secrets to the repository.
 
-## License
+---
 
-Academic project for CSE 4104 – Software Development III, NUBT Khulna. All rights reserved by the team unless a licence is added later.
+## 🔄 Team Workflow & Standards
+
+* **Agile Iterations:** Short development sprints utilizing feature branches (`feature/<name>`), pull requests (PRs), and mandatory peer code reviews.
+* **Branch Protection:** Direct pushes to `main` are restricted; all changes merge via reviewed PRs.
+* **Definition of Done:** A feature is marked complete only after passing baseline tests and integrating cleanly into the shared codebase.
+* **API-First Collaboration:** Early agreement on REST API contracts enables parallel frontend and backend development with clean, atomic commits.
+
+---
+
+## 📊 Project Roadmap & Status
+
+| Milestone | Status | Notes |
+| :--- | :---: | :--- |
+| **Project Proposal** | ✅ Completed | Submitted on 08 Nov 2026 |
+| **SRS & Initial System Diagrams** | ✅ Completed | Submitted in Week 03 |
+| **System Design & Full-Stack Implementation** | 🔄 In Progress | Active sprint development |
+| **Testing, Deployment & Final Report** | ⏳ Planned | End-to-end QA & live hosting |
+
+---
+
+## 👥 Team Information
+
+| # | Member Name | Student ID | Primary Responsibilities |
+| :-: | :--- | :---: | :--- |
+| **1** | **Zunayed Hossain** *(Team Leader)* | `11230321505` | QA, DevOps, project coordination, integration support & final submission |
+| **2** | **Mousumi Khatun** | `11230321229` | AI integration, prompt engineering, provider service & AI safety testing |
+| **3** | **Promith Saha Joy** | `11230321389` | Backend development, REST APIs, database schemas, auth & server validation |
+| **4** | **Samira Islam Kanta** | `11230321317` | Frontend development, responsive UI, dashboard, forms, charts & API integration |
+
+> *All team members actively contribute to system integration, testing, documentation, and peer code reviews.*
+
+---
+
+## 📜 License
+
+This is an academic project developed for **CSE 4104 – Software Development III** at **Northern University of Business and Technology, Khulna**. All rights are reserved by Team `CSE4104-7A-T03` unless an open-source license is explicitly added later.
