@@ -1,0 +1,59 @@
+digraph UC {
+  graph [rankdir=LR, fontname="Carlito", fontsize=26, nodesep=0.12, ranksep=0.6, pad=0.2, newrank=true, splines=true];
+  node  [fontname="Carlito", fontsize=19, color="#44546A"];
+  edge  [fontname="Carlito", fontsize=16, color="#44546A", penwidth=1.4, arrowsize=0.9];
+
+  guest [label="Guest", shape=box, style=filled, fillcolor="#EAF1F7", color="#8FA3B8", width=1.1, height=0.6];
+  user  [label="User",  shape=box, style=filled, fillcolor="#EAF1F7", color="#8FA3B8", width=1.1, height=0.6];
+  admin [label="Admin", shape=box, style=filled, fillcolor="#EAF1F7", color="#8FA3B8", width=1.1, height=0.6];
+  prov  [label="AI Provider\n(OpenAI / Gemini)", shape=box, style="rounded,filled", fillcolor="#EFE6F8", color="#7B4DA3", penwidth=1.5];
+  sch   [label="Scheduler\n(node-cron)", shape=box, style="rounded,filled", fillcolor="#F1F5F9", color="#2B5C9A", penwidth=1.5];
+
+  subgraph cluster_sys {
+    label="SoulSync AI System"; fontsize=24; style="rounded"; color="#44546A"; penwidth=1.6; margin=12;
+    node [shape=ellipse, style=filled, fillcolor="#EAF1F7", color="#2B5C9A", penwidth=1.5, margin="0.08,0.02", height=0.42];
+    uc02 [label="UC-02 Log in / Log out"];
+    uc01 [label="UC-01 Register account"];
+    uc06 [label="UC-06 Manage private journal"];
+    uc07 [label="UC-07 Guided breathing"];
+    uc08 [label="UC-08 Browse resources"];
+    uc09 [label="UC-09 Report content"];
+    uc10 [label="UC-10 Dashboard & analytics"];
+    uc11 [label="UC-11 Manage goals & habits"];
+    uc16 [label="UC-16 Manage notifications"];
+    uc17 [label="UC-17 Delete account"];
+    uc03 [label="UC-03 Manage profile & preferences"];
+    uc04 [label="UC-04 Manage AI consent"];
+    uc05 [label="UC-05 Manage daily wellness logs"];
+    uc12 [label="UC-12 AI wellness chat"];
+    uc15 [label="UC-15 Weekly summary & report"];
+    uc13 [label="UC-13 Personalised recommendations"];
+    uc14 [label="UC-14 Generate & save routine"];
+    uc18 [label="UC-18 Manage users", fillcolor="#FFF0E3", color="#D9822B"];
+    uc19 [label="UC-19 Manage wellness resources", fillcolor="#FFF0E3", color="#D9822B"];
+    uc20 [label="UC-20 Review reported content", fillcolor="#FFF0E3", color="#D9822B"];
+    uc22 [label="UC-22 Generate weekly report", fillcolor="#F1F5F9", color="#44546A"];
+    uc21 [label="UC-21 Send reminders", fillcolor="#F1F5F9", color="#44546A"];
+    {rank=same; uc01 -> uc02 -> uc03 -> uc04 -> uc05 -> uc06 -> uc07 -> uc08 -> uc09 -> uc10 -> uc11 -> uc12 -> uc13 -> uc14 -> uc15 -> uc16 -> uc17 -> uc18 -> uc19 -> uc20 -> uc21 -> uc22 [style=invis];}
+  }
+
+  node [shape=box, style=filled, fillcolor="#FFF0E3", color="#D9822B", penwidth=1.5];
+  inc_calc    [label="«include» Calculate analytics\nfrom stored logs"];
+  inc_safety  [label="«include» Pre-call safety check"];
+  inc_consent [label="«include» Verify AI consent"];
+
+  guest -> uc02; guest -> uc01;
+  user -> {uc06 uc07 uc08 uc09 uc10 uc11 uc16 uc17 uc03 uc04 uc05 uc12 uc15 uc13 uc14};
+  admin -> {uc18 uc19 uc20};
+  admin -> user [style=dashed, arrowhead=empty, xlabel="specialisation"];
+  sch -> uc22; sch -> uc21;
+  prov -> uc12 [dir=both]; prov -> uc15 [dir=both]; prov -> uc13 [dir=both]; prov -> uc14 [dir=both]; prov -> uc22 [dir=both];
+
+  uc08 -> uc09 [style=dashed, dir=back, arrowtail=vee, arrowhead=none, label="«extend»"];
+  uc10 -> inc_calc [style=dashed, arrowhead=vee, label="include"];
+  uc12 -> inc_safety [style=dashed, arrowhead=vee, label="include"];
+  uc15 -> inc_consent [style=dashed, arrowhead=vee, label="include"];
+  uc13 -> inc_consent [style=dashed, arrowhead=vee, label="include"];
+  uc14 -> inc_consent [style=dashed, arrowhead=vee, label="include"];
+  uc22 -> inc_consent [style=dashed, arrowhead=vee, label="include"];
+}

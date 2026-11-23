@@ -1,0 +1,42 @@
+digraph G {
+  graph [rankdir=TB, fontname="Carlito", fontsize=26, nodesep=0.3, ranksep=0.42, pad=0.2, labelloc=t, compound=true, newrank=true];
+  node  [fontname="Carlito", fontsize=20, shape=box, style="rounded,filled", penwidth=1.6, margin="0.14,0.08", color="#44546A", fillcolor="#F1F5F9"];
+  edge  [fontname="Carlito", fontsize=17, color="#44546A", penwidth=1.5, arrowsize=0.9];
+
+  users [label="End Users\nGuest • User • Admin"];
+
+  subgraph cluster_client {
+    label="CLIENT LAYER — React + Vite (Vercel)"; labeljust=l; fontsize=22; fontname="Carlito Bold";
+    color="#2B5C9A"; penwidth=1.8; style="rounded"; margin=10;
+    spa  [color="#2B5C9A", fillcolor="#EAF1F7", label="React SPA\nAuth • Onboarding • Dashboard • Tracker\nJournal • Goals • Breathing • AI Assistant\nResources • Notifications • Admin Panel"];
+    libs [color="#2B5C9A", fillcolor="#EAF1F7", label="Frontend libraries\nTailwind CSS • React Router • Context API\nAxios (withCredentials) • Recharts • Lucide"];
+    spa -> libs [style=dashed, arrowhead=none];
+  }
+
+  subgraph cluster_backend {
+    label="BACKEND LAYER —\nNode.js + Express REST API (/api/v1) (Render)"; labeljust=l; fontsize=22; fontname="Carlito Bold";
+    color="#1F8A70"; penwidth=1.8; style="rounded"; margin=10;
+    mw     [color="#1F8A70", fillcolor="#E3F5F0", label="Middleware pipeline\nHelmet • CORS allow-list • Rate limiting\nCookie parser • JWT auth • Role guard\nInput validation • Error handler"];
+    routes [color="#1F8A70", fillcolor="#E3F5F0", label="Routes & Controllers\n/auth • /users • /wellness • /journal\n/analytics • /goals • /ai • /notifications\n/reports • /resources • /admin"];
+    sched  [label="Scheduler (node-cron)\nDaily reminders • Weekly report jobs\nIdempotent + missed-run check"];
+    domain [color="#1F8A70", fillcolor="#E3F5F0", label="Domain services\nAuth • Wellness & Resources • Analytics\nGoals & Routines • Reports & Notifications"];
+    ai     [color="#7B4DA3", fillcolor="#EFE6F8", label="AI Service + Provider Adapter\nConsent check • Pre-call safety check\nPrompt builder • Output validation"];
+    mw -> routes;
+    routes -> domain;
+    sched -> domain [label="  scheduled jobs"];
+    domain -> ai [label="  AI requests"];
+  }
+
+  ext  [color="#7B4DA3", fillcolor="#EFE6F8", label="EXTERNAL AI PROVIDER\nOpenAI API or\nGoogle Gemini API\nServer-side API key only"];
+  data [color="#D9822B", fillcolor="#FFF0E3", label="DATA LAYER — MongoDB Atlas\nUsers • WellnessLogs • JournalEntries\nGoals • Conversations • Routines\nNotifications • WellnessReports\nResources • ContentReports"];
+  smtp [color="#7B4DA3", fillcolor="#FAF5FF", style="rounded,filled,dashed", label="OPTIONAL EMAIL\nDELIVERY\nNodemailer / SMTP"];
+
+  users -> spa [label="  browser"];
+  libs -> mw [label="  HTTPS + JSON +\n  secure HTTP-only cookie", ltail=cluster_client, lhead=cluster_backend];
+  ai -> ext   [label="  minimum consented\n  data only"];
+  domain -> data [label="  Mongoose over TLS"];
+  domain -> smtp [style=dashed, label="  optional"];
+
+  {rank=same; ext; data; smtp;}
+  ext -> data -> smtp [style=invis];
+}

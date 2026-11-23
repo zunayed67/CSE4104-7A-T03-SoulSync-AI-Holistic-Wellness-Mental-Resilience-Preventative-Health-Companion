@@ -1,0 +1,44 @@
+digraph ACT {
+  graph [rankdir=TB, fontname="Carlito", fontsize=26, nodesep=0.25, ranksep=0.16, pad=0.2];
+  node  [fontname="Carlito", fontsize=20, shape=box, style="rounded,filled", fillcolor="#EAF1F7", color="#2B5C9A", penwidth=1.6, margin="0.16,0.07"];
+  edge  [fontname="Carlito", fontsize=19, color="#44546A", penwidth=1.5, arrowsize=0.9];
+
+  start [label="", shape=circle, width=0.3, fillcolor="#17304D", color="#17304D"];
+  a1 [label="User enters a message\nand submits"];
+  a2 [label="Backend authenticates session\nand validates request"];
+  d1 [shape=diamond, fillcolor="#FFF0E3", color="#D9822B", label="Input valid\nand within limits?"];
+  e1 [fillcolor="#FDE8E6", color="#C0392B", label="Return validation error\n(no provider call)"];
+  a3 [label="Run rule-based pre-call safety check"];
+  d2 [shape=diamond, fillcolor="#FFF0E3", color="#D9822B", label="Crisis / self-harm or\ndisallowed medical request?"];
+  e2 [fillcolor="#FDE8E6", color="#C0392B", label="Return safety-focused response\nand professional / emergency\nhelp guidance"];
+  d3 [shape=diamond, fillcolor="#FFF0E3", color="#D9822B", label="Does request use\nwellness data?"];
+  d4 [shape=diamond, fillcolor="#FFF0E3", color="#D9822B", label="Explicit AI consent\ncurrently enabled?"];
+  e3 [fillcolor="#FDE8E6", color="#C0392B", label="Block data transfer; ask user\nto enable consent or\ncontinue without data"];
+  a4 [label="Load only owner-authorised,\nminimum required fields; exclude\njournal text by default"];
+  a5 [label="Build bounded prompt with\nnon-medical instructions"];
+  a6 [fillcolor="#EFE6F8", color="#7B4DA3", label="Call configured AI provider\n(OpenAI or Gemini) via adapter"];
+  a7 [label="Validate, filter and sanitise\nprovider output"];
+  d5 [shape=diamond, fillcolor="#FFF0E3", color="#D9822B", label="Provider available\nand response valid?"];
+  e4 [fillcolor="#FDE8E6", color="#C0392B", label="Return friendly retry /\nfallback message; log technical\nerror without sensitive content"];
+  ok [fillcolor="#E3F5F0", color="#1F8A70", label="Return response + wellness disclaimer\nto frontend; display to user"];
+  end [label="", shape=doublecircle, width=0.3, fillcolor="#17304D", color="#17304D"];
+
+  start -> a1 -> a2 -> d1;
+  d1 -> e1 [label=" No"];
+  d1 -> a3 [label=" Yes"];
+  a3 -> d2;
+  d2 -> e2 [label=" Yes"];
+  d2 -> d3 [label=" No"];
+  d3 -> d4 [label=" Yes"];
+  d3 -> a4 [label=" No"];
+  d4 -> e3 [label=" No"];
+  d4 -> a4 [label=" Yes"];
+  a4 -> a5 -> a6 -> a7 -> d5;
+  d5 -> e4 [label=" No"];
+  d5 -> ok [label=" Yes"];
+  e1 -> end; e2 -> end; e3 -> end; e4 -> end; ok -> end;
+  {rank=same; e1; a3;}
+  {rank=same; e2; d3;}
+  {rank=same; e3; a4;}
+  {rank=same; e4; ok;}
+}
