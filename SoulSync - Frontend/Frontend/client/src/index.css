@@ -1,0 +1,80 @@
+
+@import "tailwindcss";
+
+/* SoulSync AI - Calm Colour Theme */
+
+:root {
+  --bg-main: #f3f7fc;
+  --bg-sidebar: #edf3fb;
+  --bg-card: #ffffff;
+  --bg-soft: #e3ecfa;
+
+  --primary: #8ba9df;
+  --primary-dark: #718fc9;
+  --text-main: #344054;
+  --text-light: #7b8798;
+
+  --border: #dce4ef;
+  --accent: #f3edfb;
+}
+
+/* Tailwind Colour Connection */
+@theme inline{
+  --color-bg-main: var(--bg-main);
+  --color-bg-sidebar: var(--bg-sidebar);
+  --color-bg-card: var(--bg-card);
+  --color-bg-soft: var(--bg-soft);
+
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+
+  --color-text-main: var(--text-main);
+  --color-text-light: var(--text-light);
+
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+}
+
+/* Global Settings */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+ button {
+  cursor: pointer;
+  transition: background-color 0.2s ease,
+              color 0.2s ease,
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+}
+
+/* Main Page */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
