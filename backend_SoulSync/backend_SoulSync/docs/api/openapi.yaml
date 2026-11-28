@@ -1,0 +1,3152 @@
+openapi: 3.0.3
+info:
+  title: SoulSync AI API
+  version: 1.0.0
+  description:
+    'REST API for SoulSync AI, a wellness habit tracker with a consent-based AI assistant.
+
+
+    Authentication uses an HTTP-only session cookie (`soulsync_token`) set by `/auth/login` or `/auth/register`;
+    send requests with credentials. Successful responses are `{ success: true, data, meta? }`; errors
+    are `{ success: false, error: { code, message, details?, requestId } }`.
+
+
+    AI output is general wellness information, not medical advice.'
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local
+  - url: https://soulsync-api.onrender.com/api/v1
+    description: Render (replace with your service URL)
+tags:
+  - name: Authentication
+  - name: Profile
+  - name: Wellness
+  - name: Journal
+  - name: Analytics
+  - name: AI
+  - name: Goals
+  - name: Routines
+  - name: Notifications
+  - name: Reports
+  - name: Resources
+  - name: Admin
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new account
+      description:
+        Creates a `user`-role account with AI consent off and signs the user in by setting
+        the HTTP-only `soulsync_token` cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+      security: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Log in
+      description:
+        Sets the HTTP-only session cookie. Wrong email and wrong password return the same 401.
+        Suspended accounts get 403 `ACCOUNT_SUSPENDED` after the password is verified.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Log out (clears the cookie)
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Current user
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /users/me:
+    get:
+      tags:
+        - Profile
+      summary: Get profile
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags:
+        - Profile
+      summary: Update profile, timezone, reminder preferences, onboarding
+      description:
+        Only the listed fields are accepted; role, status and consent cannot be changed here.
+        `reminderPrefs` is merged field by field.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfile'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags:
+        - Profile
+      summary: Delete account and all data
+      description:
+        Requires the password. Removes every record the user owns. The last administrator cannot
+        be deleted (409 `LAST_ADMIN`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAccount'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /users/me/password:
+    patch:
+      tags:
+        - Profile
+      summary: Change password
+      description: Revokes sessions issued earlier and issues a new cookie for this device.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /users/me/ai-consent:
+    put:
+      tags:
+        - Profile
+      summary: Grant or withdraw AI consent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiConsent'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      aiConsent:
+                        type: boolean
+                      aiConsentAt:
+                        type: string
+                        format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /wellness:
+    get:
+      tags:
+        - Wellness
+      summary: List records (newest first)
+      description: Defaults to the last 30 days. `meta.range` reports the resolved range.
+      parameters:
+        - &id003
+          $ref: '#/components/parameters/Page'
+        - &id004
+          $ref: '#/components/parameters/Limit'
+        - name: from
+          in: query
+          required: false
+          schema: &id001
+            type: string
+            format: date
+            example: '2026-11-16'
+        - name: to
+          in: query
+          required: false
+          schema: *id001
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WellnessLog'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Wellness
+      summary: Create the day’s record
+      description:
+        '`date` defaults to today in the user’s timezone and cannot be in the future. A second
+        record for the day returns 409 `WELLNESS_LOG_EXISTS` with `details.existingLogId`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WellnessCreate'
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/WellnessLog'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /wellness/date/{date}:
+    get:
+      tags:
+        - Wellness
+      summary: Get the record for a date
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema: *id001
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/WellnessLog'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /wellness/{id}:
+    get:
+      tags:
+        - Wellness
+      summary: Get a record
+      parameters:
+        - &id002
+          $ref: '#/components/parameters/Id'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/WellnessLog'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Wellness
+      summary: Edit metrics (null clears one)
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WellnessUpdate'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/WellnessLog'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Wellness
+      summary: Delete a record
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted, no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /journal:
+    get:
+      tags:
+        - Journal
+      summary: List entries
+      parameters:
+        - *id003
+        - *id004
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - entry
+              - reflection
+              - checkin
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          schema: *id001
+        - name: to
+          in: query
+          required: false
+          schema: *id001
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JournalEntry'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Journal
+      summary: Create an entry (private)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalCreate'
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/JournalEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /journal/{id}:
+    get:
+      tags:
+        - Journal
+      summary: Get an entry
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/JournalEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Journal
+      summary: Edit an entry
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalUpdate'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/JournalEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Journal
+      summary: Delete an entry
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted, no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /analytics/overview:
+    get:
+      tags:
+        - Analytics
+      summary: Dashboard overview (today, latest, streak, goals, unread)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Overview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /analytics/trends:
+    get:
+      tags:
+        - Analytics
+      summary: Charts and statistics
+      description:
+        'Calculated from stored records only. Days without a record have `recorded: false`
+        and null metrics. Max 90 days.'
+      parameters:
+        - name: range
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - week
+              - month
+              - custom
+          description: week = last 7 days, month = last 30 days, custom needs `from`
+        - name: from
+          in: query
+          required: false
+          schema: *id001
+        - name: to
+          in: query
+          required: false
+          schema: *id001
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Trends'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /ai/chat:
+    post:
+      tags:
+        - AI
+      summary: Chat with the wellness assistant
+      description:
+        Allowed without consent, but then no tracked data is sent. Crisis, medical and prompt-injection
+        messages get a canned safety reply (no provider call, no quota). 429 `AI_QUOTA_EXCEEDED` after
+        the daily limit; 502/503/504 when the provider fails.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ChatResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /ai/recommendations:
+    post:
+      tags:
+        - AI
+      summary: Personalised recommendations (needs consent)
+      description:
+        403 `AI_CONSENT_REQUIRED` without consent; 400 `INSUFFICIENT_DATA` with fewer than
+        3 logged days in the last 14.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/RecommendationsResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /ai/routine:
+    post:
+      tags:
+        - AI
+      summary: Generate a draft daily routine (needs consent)
+      description:
+        Returns an unsaved draft; save it with `POST /routines`. Free-text preferences pass
+        the same safety check (422 `AI_INPUT_NOT_SUPPORTED`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineRequest'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/RoutineResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /ai/weekly-summary:
+    post:
+      tags:
+        - AI
+      summary: Weekly AI summary on the calculated report (needs consent)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeeklySummaryRequest'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/WeeklySummaryResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /ai/usage:
+    get:
+      tags:
+        - AI
+      summary: Today’s AI quota
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AiUsage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /ai/conversations:
+    get:
+      tags:
+        - AI
+      summary: List saved conversations
+      parameters:
+        - *id003
+        - *id004
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /ai/conversations/{id}:
+    get:
+      tags:
+        - AI
+      summary: Get a conversation with its messages
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Conversation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - AI
+      summary: Delete a conversation
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted, no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /goals:
+    get:
+      tags:
+        - Goals
+      summary: List goals with progress
+      parameters:
+        - *id003
+        - *id004
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - done
+              - missed
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Goal'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Goals
+      summary: Create a goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalCreate'
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Goal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /goals/{id}:
+    get:
+      tags:
+        - Goals
+      summary: Get a goal
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Goal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Goals
+      summary: Edit or complete a goal
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalUpdate'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Goal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Goals
+      summary: Delete a goal
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted, no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /goals/{id}/progress:
+    patch:
+      tags:
+        - Goals
+      summary: Record progress for a day
+      description: Send `value` (set the day’s total) or `increment`. Drives completion rate and streak.
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalProgress'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Goal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /routines:
+    get:
+      tags:
+        - Routines
+      summary: List saved routines
+      parameters:
+        - *id003
+        - *id004
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Routine'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Routines
+      summary: Save a routine
+      description: Only one routine can be active; activating one deactivates the rest.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineCreate'
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Routine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /routines/{id}:
+    get:
+      tags:
+        - Routines
+      summary: Get a routine
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Routine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Routines
+      summary: Edit a routine
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineUpdate'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Routine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Routines
+      summary: Delete a routine
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted, no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List notifications (newest first)
+      description: '`meta.unread` carries the unread counter.'
+      parameters:
+        - *id003
+        - *id004
+        - name: unreadOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: Unread counter
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      unread:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /notifications/read-all:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark all as read
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      updated:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /notifications/{id}/read:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark one as read
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Notification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reports:
+    get:
+      tags:
+        - Reports
+      summary: List weekly reports
+      parameters:
+        - *id003
+        - *id004
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Report'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /reports/generate:
+    post:
+      tags:
+        - Reports
+      summary: Calculate (or refresh) a week’s report
+      description: Metrics only, no AI. Idempotent per ISO week. Future weeks are rejected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReport'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Report'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /reports/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Get a report
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Report'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /resources:
+    get:
+      tags:
+        - Resources
+      summary: Browse the published library
+      description: List entries omit `content`.
+      parameters:
+        - *id003
+        - *id004
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - article
+              - breathing
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /resources/categories:
+    get:
+      tags:
+        - Resources
+      summary: Categories of published resources
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /resources/{id}:
+    get:
+      tags:
+        - Resources
+      summary: Get a published resource
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /content-reports:
+    post:
+      tags:
+        - Resources
+      summary: Report a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentReportCreate'
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ContentReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /admin/stats:
+    get:
+      tags:
+        - Admin
+      summary: Platform counts
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AdminStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: List users (non-sensitive fields only)
+      parameters:
+        - *id003
+        - *id004
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - user
+              - admin
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - suspended
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUser'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/users/{id}/status:
+    patch:
+      tags:
+        - Admin
+      summary: Suspend or reactivate a user
+      description: Administrators (including yourself) cannot be modified here.
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusBody'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /admin/users/{id}:
+    delete:
+      tags:
+        - Admin
+      summary: Delete a user and all their data
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted, no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /admin/resources:
+    get:
+      tags:
+        - Admin
+      summary: List all resources (incl. unpublished)
+      parameters:
+        - *id003
+        - *id004
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Resource'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags:
+        - Admin
+      summary: Create a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceCreate'
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/resources/{id}:
+    get:
+      tags:
+        - Admin
+      summary: Get any resource
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Admin
+      summary: Edit a resource
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceUpdate'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Admin
+      summary: Delete a resource
+      parameters:
+        - *id002
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Deleted, no content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /admin/resources/{id}/publish:
+    patch:
+      tags:
+        - Admin
+      summary: Publish or unpublish
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishBody'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /admin/content-reports:
+    get:
+      tags:
+        - Admin
+      summary: Review queue
+      parameters:
+        - *id003
+        - *id004
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - open
+              - reviewed
+              - dismissed
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentReport'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/content-reports/{id}:
+    patch:
+      tags:
+        - Admin
+      summary: Dismiss a report or unpublish the resource
+      parameters:
+        - *id002
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewBody'
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ContentReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: soulsync_token
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: &id005
+        type: string
+        pattern: ^[a-f0-9]{24}$
+        example: 6afa8eec5bd8cf2b57714567
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    BadRequest:
+      description: Validation failed (`VALIDATION_ERROR`) or invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: No valid session cookie
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Role, consent or account status does not allow this
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found (also used for other users’ records)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Duplicate or conflicting state
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Rate limit or AI quota exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unavailable:
+      description: AI provider or service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+            details: {}
+            requestId:
+              type: string
+          required:
+            - code
+            - message
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+    User:
+      type: object
+      properties:
+        id: *id005
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - user
+            - admin
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+        timezone:
+          type: string
+          example: Asia/Dhaka
+        reminderPrefs:
+          type: object
+          properties:
+            daily: &id006
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                time: &id014
+                  type: string
+                  pattern: ^([01]\d|2[0-3]):[0-5]\d$
+                  example: 07:30
+            goal: *id006
+            weekly:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+            emailEnabled:
+              type: boolean
+        goalsOfInterest:
+          type: array
+          items:
+            type: string
+        aiConsent:
+          type: boolean
+        aiConsentAt:
+          type: string
+          nullable: true
+          format: date-time
+        onboardingDone:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    Register:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          description: At least 8 characters, with a letter and a number; at most 72 bytes.
+        timezone:
+          type: string
+      required:
+        - name
+        - email
+        - password
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+    UpdateProfile:
+      type: object
+      properties:
+        name:
+          type: string
+        timezone:
+          type: string
+        reminderPrefs:
+          type: object
+          properties:
+            daily: *id006
+            goal: *id006
+            weekly:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+            emailEnabled:
+              type: boolean
+        goalsOfInterest:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+        onboardingDone:
+          type: boolean
+    ChangePassword:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+      required:
+        - currentPassword
+        - newPassword
+    AiConsent:
+      type: object
+      properties:
+        consent:
+          type: boolean
+      required:
+        - consent
+    DeleteAccount:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
+    WellnessLog:
+      type: object
+      properties:
+        id: *id005
+        date: *id001
+        mood: &id007
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        stressLevel: &id008
+          type: integer
+          minimum: 1
+          maximum: 10
+          nullable: true
+        sleepHours: &id009
+          type: number
+          minimum: 0
+          maximum: 24
+          nullable: true
+        waterIntakeMl: &id010
+          type: integer
+          minimum: 0
+          maximum: 10000
+          nullable: true
+        activityMinutes: &id011
+          type: integer
+          minimum: 0
+          maximum: 1440
+          nullable: true
+        energyLevel: &id012
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    WellnessCreate:
+      type: object
+      properties:
+        date: *id001
+        mood:
+          type: integer
+          minimum: 1
+          maximum: 5
+        stressLevel:
+          type: integer
+          minimum: 1
+          maximum: 10
+        sleepHours:
+          type: number
+          minimum: 0
+          maximum: 24
+        waterIntakeMl:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        activityMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        energyLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+      description: At least one metric is required.
+    WellnessUpdate:
+      type: object
+      properties:
+        mood: *id007
+        stressLevel: *id008
+        sleepHours: *id009
+        waterIntakeMl: *id010
+        activityMinutes: *id011
+        energyLevel: *id012
+      description: Send null to clear a metric; at least one metric must remain on the record.
+    JournalEntry:
+      type: object
+      properties:
+        id: *id005
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum:
+            - entry
+            - reflection
+            - checkin
+        mood:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+    JournalCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 120
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        type:
+          type: string
+          enum:
+            - entry
+            - reflection
+            - checkin
+        mood:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 5
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+      required:
+        - content
+    JournalUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+        mood:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+    Trends:
+      type: object
+      properties:
+        range:
+          type: object
+          properties:
+            startKey: *id001
+            endKey: *id001
+            days:
+              type: integer
+        days:
+          type: array
+          items:
+            type: object
+            properties:
+              date: *id001
+              recorded:
+                type: boolean
+              mood: *id007
+              stressLevel: *id008
+              sleepHours: *id009
+              waterIntakeMl: *id010
+              activityMinutes: *id011
+              energyLevel: *id012
+        metrics:
+          type: object
+          properties:
+            mood: &id013
+              type: object
+              properties:
+                count:
+                  type: integer
+                average:
+                  type: number
+                  nullable: true
+                min:
+                  type: number
+                  nullable: true
+                max:
+                  type: number
+                  nullable: true
+                latest:
+                  type: number
+                  nullable: true
+                trend:
+                  type: object
+                  properties:
+                    direction:
+                      type: string
+                      enum:
+                        - increasing
+                        - decreasing
+                        - stable
+                        - insufficient_data
+                    slopePerDay:
+                      type: number
+                      nullable: true
+            stressLevel: *id013
+            sleepHours: *id013
+            waterIntakeMl: *id013
+            activityMinutes: *id013
+            energyLevel: *id013
+        completeness:
+          type: object
+          properties:
+            expected:
+              type: integer
+            recorded:
+              type: integer
+            missing:
+              type: array
+              items: *id001
+            completionRate:
+              type: number
+              nullable: true
+        streak:
+          type: integer
+    Overview:
+      type: object
+      properties:
+        date: *id001
+        hasTodayLog:
+          type: boolean
+        todayLog:
+          allOf:
+            - $ref: '#/components/schemas/WellnessLog'
+          nullable: true
+        latestLog:
+          allOf:
+            - $ref: '#/components/schemas/WellnessLog'
+          nullable: true
+        streak:
+          type: integer
+        last7Days:
+          type: object
+          properties:
+            recordedDays:
+              type: integer
+            averages:
+              type: object
+              properties:
+                mood:
+                  type: number
+                  nullable: true
+                stressLevel:
+                  type: number
+                  nullable: true
+                sleepHours:
+                  type: number
+                  nullable: true
+                waterIntakeMl:
+                  type: number
+                  nullable: true
+                activityMinutes:
+                  type: number
+                  nullable: true
+                energyLevel:
+                  type: number
+                  nullable: true
+        goals:
+          type: object
+          properties:
+            active:
+              type: integer
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Goal'
+        notifications:
+          type: object
+          properties:
+            unread:
+              type: integer
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        conversationId: *id005
+      required:
+        - message
+    ChatResult:
+      type: object
+      properties:
+        conversationId: *id005
+        reply:
+          type: string
+        disclaimer:
+          type: string
+        safety:
+          type: object
+          properties:
+            action:
+              type: string
+              enum:
+                - allow
+                - crisis
+                - medical
+                - injection
+    RecommendationsResult:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              action:
+                type: string
+              why:
+                type: string
+        basedOnDays:
+          type: integer
+        disclaimer:
+          type: string
+    RoutineRequest:
+      type: object
+      properties:
+        preferences:
+          type: string
+          maxLength: 500
+        availableMinutes:
+          type: integer
+          minimum: 10
+          maximum: 960
+        wakeTime: *id014
+        sleepTime: *id014
+    RoutineResult:
+      type: object
+      properties:
+        routine:
+          type: object
+          properties:
+            title:
+              type: string
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoutineItem'
+        saved:
+          type: boolean
+          example: false
+        disclaimer:
+          type: string
+    WeeklySummaryRequest:
+      type: object
+      properties:
+        weekStart: *id001
+    WeeklySummaryResult:
+      type: object
+      properties:
+        report:
+          $ref: '#/components/schemas/Report'
+        disclaimer:
+          type: string
+    AiUsage:
+      type: object
+      properties:
+        date: *id001
+        used:
+          type: integer
+        limit:
+          type: integer
+        remaining:
+          type: integer
+        consent:
+          type: boolean
+    Conversation:
+      type: object
+      properties:
+        id: *id005
+        title:
+          type: string
+        safetyFlagged:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum:
+                  - user
+                  - assistant
+              content:
+                type: string
+              ts:
+                type: string
+                format: date-time
+              flagged:
+                type: boolean
+    Goal:
+      type: object
+      properties:
+        id: *id005
+        title:
+          type: string
+        type:
+          type: string
+          enum:
+            - daily
+            - weekly
+        targetValue:
+          type: number
+        unit:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - done
+            - missed
+        deadline:
+          type: string
+          format: date
+          example: '2026-11-16'
+          nullable: true
+        currentValue:
+          type: number
+        progressPercent:
+          type: number
+        completionRate:
+          type: number
+          nullable: true
+        streak:
+          type: integer
+        completedPeriods:
+          type: integer
+        elapsedPeriods:
+          type: integer
+    GoalCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 120
+        type:
+          type: string
+          enum:
+            - daily
+            - weekly
+        targetValue:
+          type: number
+          exclusiveMinimum: 0
+        unit:
+          type: string
+          maxLength: 30
+        deadline:
+          type: string
+          format: date
+          example: '2026-11-16'
+          nullable: true
+      required:
+        - title
+        - type
+        - targetValue
+    GoalUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+          enum:
+            - daily
+            - weekly
+        targetValue:
+          type: number
+        unit:
+          type: string
+        deadline:
+          type: string
+          format: date
+          example: '2026-11-16'
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - done
+    GoalProgress:
+      type: object
+      properties:
+        value:
+          type: number
+          minimum: 0
+        increment:
+          type: number
+        date: *id001
+      description: Exactly one of `value` or `increment`.
+    RoutineItem:
+      type: object
+      properties:
+        time: *id014
+        activity:
+          type: string
+          minLength: 2
+          maxLength: 160
+      required:
+        - time
+        - activity
+    Routine:
+      type: object
+      properties:
+        id: *id005
+        title:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        isActive:
+          type: boolean
+        savedAt:
+          type: string
+          format: date-time
+    RoutineCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 100
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+          minItems: 1
+          maxItems: 20
+        isActive:
+          type: boolean
+      required:
+        - title
+        - items
+    RoutineUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineItem'
+        isActive:
+          type: boolean
+    Notification:
+      type: object
+      properties:
+        id: *id005
+        goalId:
+          type: string
+          pattern: ^[a-f0-9]{24}$
+          example: 6afa8eec5bd8cf2b57714567
+          nullable: true
+        type:
+          type: string
+          enum:
+            - reminder
+            - goal
+            - report
+            - system
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    Report:
+      type: object
+      properties:
+        id: *id005
+        weekId:
+          type: string
+          example: 2026-W46
+        weekStart: *id001
+        weekEnd: *id001
+        metrics:
+          type: object
+          properties:
+            mood: *id013
+            stressLevel: *id013
+            sleepHours: *id013
+            waterIntakeMl: *id013
+            activityMinutes: *id013
+            energyLevel: *id013
+        recordedDays:
+          type: integer
+        missingDays:
+          type: integer
+        missingDates:
+          type: array
+          items: *id001
+        aiSummary:
+          type: string
+          nullable: true
+        generatedAt:
+          type: string
+          format: date-time
+    GenerateReport:
+      type: object
+      properties:
+        weekStart:
+          type: string
+          format: date
+          example: '2026-11-16'
+          description: Any date inside the wanted week; defaults to the current week.
+    BreathingPattern:
+      type: object
+      properties:
+        inhale:
+          type: integer
+          minimum: 1
+          maximum: 30
+        hold:
+          type: integer
+          minimum: 0
+          maximum: 30
+        exhale:
+          type: integer
+          minimum: 1
+          maximum: 30
+        holdAfter:
+          type: integer
+          minimum: 0
+          maximum: 30
+        cycles:
+          type: integer
+          minimum: 1
+          maximum: 60
+    Resource:
+      type: object
+      properties:
+        id: *id005
+        title:
+          type: string
+        type:
+          type: string
+          enum:
+            - article
+            - breathing
+        category:
+          type: string
+        content:
+          type: string
+          description: Omitted in list responses.
+        breathingPattern:
+          $ref: '#/components/schemas/BreathingPattern'
+        isPublished:
+          type: boolean
+          description: Admin responses only.
+        createdAt:
+          type: string
+          format: date-time
+    ResourceCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 140
+        type:
+          type: string
+          enum:
+            - article
+            - breathing
+        category:
+          type: string
+        content:
+          type: string
+        breathingPattern:
+          $ref: '#/components/schemas/BreathingPattern'
+        isPublished:
+          type: boolean
+      required:
+        - title
+        - type
+        - category
+        - content
+      description: Breathing exercises require `breathingPattern` (inhale and exhale at least).
+    ResourceUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        category:
+          type: string
+        content:
+          type: string
+        breathingPattern:
+          $ref: '#/components/schemas/BreathingPattern'
+        isPublished:
+          type: boolean
+    PublishBody:
+      type: object
+      properties:
+        isPublished:
+          type: boolean
+      required:
+        - isPublished
+    ContentReportCreate:
+      type: object
+      properties:
+        resourceId: *id005
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+      required:
+        - resourceId
+        - reason
+    ContentReport:
+      type: object
+      properties:
+        id: *id005
+        reason:
+          type: string
+        status:
+          type: string
+          enum:
+            - open
+            - reviewed
+            - dismissed
+        reporterId: *id005
+        resource:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    ReviewBody:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - dismiss
+            - unpublish
+      required:
+        - action
+    StatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - active
+            - suspended
+      required:
+        - status
+    AdminUser:
+      type: object
+      properties:
+        id: *id005
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    AdminStats:
+      type: object
+      properties:
+        users:
+          type: object
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            suspended:
+              type: integer
+            admins:
+              type: integer
+        resources:
+          type: object
+          properties:
+            total:
+              type: integer
+            published:
+              type: integer
+        contentReports:
+          type: object
+          properties:
+            open:
+              type: integer

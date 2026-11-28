@@ -1,0 +1,51 @@
+{
+  "name": "soulsync-ai-backend",
+  "version": "1.0.0",
+  "description": "SoulSync AI REST API (Node.js, Express, MongoDB)",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed:admin": "node scripts/seed-admin.js",
+    "seed:resources": "node scripts/seed-resources.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@google/genai": "^3.6.1",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "luxon": "^3.7.2",
+    "mongoose": "^9.12.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.5.0",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "mongodb-memory-server": "^11.3.0",
+    "pino-pretty": "^13.2.0",
+    "prettier": "^3.9.10",
+    "supertest": "^7.3.2",
+    "vitest": "^5.1.0"
+  }
+}

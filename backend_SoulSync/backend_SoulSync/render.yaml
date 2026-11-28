@@ -1,0 +1,37 @@
+# Render blueprint for the API. Create it with: New + > Blueprint > pick this repository.
+# Secrets marked `sync: false` are asked for in the Render dashboard (never commit them).
+services:
+  - type: web
+    name: soulsync-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI # MongoDB Atlas connection string
+        sync: false
+      - key: JWT_SECRET # generated once by Render (256-bit)
+        generateValue: true
+      - key: CLIENT_ORIGINS # e.g. https://soulsync-ai.vercel.app (comma-separated, no trailing path)
+        sync: false
+      - key: DEFAULT_TIMEZONE
+        value: Asia/Dhaka
+      - key: AI_PROVIDER # openai | gemini
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_MODEL # optional model override
+        sync: false
+      - key: AI_DAILY_REQUEST_LIMIT
+        value: '30'
+      - key: ENABLE_JOBS
+        value: 'true'
